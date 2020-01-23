@@ -39,7 +39,7 @@ describe("Command class", () => {
     it("emits the onBeforeExecute event", () => {
         command.onBeforeExecute = () => "emitted onBeforeExecute";
 
-        (command as EventEmitter).on("onBeforeExecute", (data) => {
+        command.eventEmitter.on("onBeforeExecute", (data) => {
             expect(data).to.eq("emitted onBeforeExecute");
         });
     });
@@ -47,44 +47,26 @@ describe("Command class", () => {
     it("emits the onAfterExecute event", () => {
         command.onAfterExecute = () => "emitted onAfterExecute";
 
-        (command as EventEmitter).on("onAfterExecute", (data) => {
+        command.eventEmitter.on("onAfterExecute", (data) => {
             expect(data).to.eq("emitted onAfterExecute");
         });
     });
 
-    it("emits a custom event", () => {
-        command.addEventListener("emitFoo", () => {
-            return {data: "foo"};
-        });
+    it("supports custom events", () => {
+        let eventHandled = false;
 
-        const events: any[] = [];
-
-        command.on("customEvent", (event) => {
-            console.log(event);
-            events.push(event.name);
-        });
+        command.eventEmitter.on("onFoo", () => eventHandled = true);
 
         command.executeCallback = () => {
             return new Promise<any>((resolve, reject) => {
-                command.emit("emitFoo");
+                (command as EventEmitter).emit("onFoo");
                 resolve();
             });
-        }
-        const result = command.execute();
+        };
 
-        result.then(() => {
-            /* const fooEvent = events.find(e => e.name === "emitFoo");
-            expect(fooEvent.data).to.eq("foo"); */
+        command.execute().then(() => {
+            expect(eventHandled).to.eq(true);
         });
-        
-        /* const barEvent = events.find(e => e.name === "emitBar");
-        expect(barEvent.data).to.eq("bar"); */
-    });
 
-    it("throws when a duplicate custom event listener is added", () => {
-        expect(() => {
-            command.addEventListener("foo", () => true);
-            command.addEventListener("foo", () => false);
-        }).throws("An event handler named 'foo' has already been added.");
     });
 });
