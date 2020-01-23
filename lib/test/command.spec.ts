@@ -51,4 +51,40 @@ describe("Command class", () => {
             expect(data).to.eq("emitted onAfterExecute");
         });
     });
+
+    it("emits a custom event", () => {
+        command.addEventListener("emitFoo", () => {
+            return {data: "foo"};
+        });
+
+        const events: any[] = [];
+
+        command.on("customEvent", (event) => {
+            console.log(event);
+            events.push(event.name);
+        });
+
+        command.executeCallback = () => {
+            return new Promise<any>((resolve, reject) => {
+                command.emit("emitFoo");
+                resolve();
+            });
+        }
+        const result = command.execute();
+
+        result.then(() => {
+            /* const fooEvent = events.find(e => e.name === "emitFoo");
+            expect(fooEvent.data).to.eq("foo"); */
+        });
+        
+        /* const barEvent = events.find(e => e.name === "emitBar");
+        expect(barEvent.data).to.eq("bar"); */
+    });
+
+    it("throws when a duplicate custom event listener is added", () => {
+        expect(() => {
+            command.addEventListener("foo", () => true);
+            command.addEventListener("foo", () => false);
+        }).throws("An event handler named 'foo' has already been added.");
+    });
 });
